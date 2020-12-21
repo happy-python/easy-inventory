@@ -1,8 +1,15 @@
-# electron-vue-admin
+# easy-inventory
 
 > An electron-vue project
 
-This is a vue electron admin project base on  [vueAdmin-template](https://github.com/PanJiaChen/vueAdmin-template) , and was generated from [electron-vue](https://github.com/SimulatedGREG/electron-vue) using [vue-cli](https://github.com/vuejs/vue-cli). Documentation about this project can be found [here](https://simulatedgreg.gitbooks.io/electron-vue/content/index.html).
+在 electron-vue-admin 的基础上进行改造，添加了本地数据库的支持（better-sqlite3），以及简单的 Excel 的导出功能（electron-dl）
+
+
+本地数据库可选方案：
+ - node-sqlite3
+ - better-sqlite3
+ - nedb
+
 
 ## Build Setup
 
@@ -15,22 +22,4 @@ npm run dev
 
 # build electron app for production
 npm run build
-
-# lint all JS/Vue component files in `app/src`
-npm run lint
-
-# run webpack in production
-npm run pack
 ```
----
-
-
-## Demo
-
-![](https://github.com/PanJiaChen/PanJiaChen.github.io/blob/master/images/electron-login.png)
-
-![](https://github.com/PanJiaChen/PanJiaChen.github.io/blob/master/images/electron-admin.gif)
-
-
-## Download
-Mac: [app release](https://github.com/PanJiaChen/electron-vue-admin/releases/tag/v3.0.0)
