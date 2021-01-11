@@ -3,7 +3,7 @@
     <el-form ref="form" :model="form" :inline="true">
       <el-form-item label="产品名称:">
         <el-input
-          v-model="form.name"
+          v-model.trim="form.name"
           placeholder="请输入产品名称"
           clearable
         ></el-input>
@@ -34,12 +34,7 @@
           {{ scope.row.quantity }}
         </template>
       </el-table-column>
-      <el-table-column label="成本" align="center">
-        <template slot-scope="scope">
-          {{ scope.row.cost }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="创建时间" width="200">
+      <el-table-column align="center" label="创建时间">
         <template slot-scope="scope">
           <i class="el-icon-time"></i>
           <span>{{ scope.row.create_time | parseTime }}</span>
@@ -127,20 +122,24 @@ export default {
       });
     },
     create() {
-      createProduct(this.form.name)
-        .then(() => {
-          this.$message({
-            message: "创建成功",
-            type: "success",
+      if (this.form.name != "") {
+        createProduct(this.form.name)
+          .then(() => {
+            this.$message({
+              message: "创建成功",
+              type: "success",
+            });
+            this.form.name = "";
+            setTimeout(() => {
+              this.fetchData(this.currentPage);
+            }, 2000);
+          })
+          .catch((err) => {
+            this.$message.error(err);
           });
-          this.form.name = "";
-          setTimeout(() => {
-            this.fetchData(this.currentPage);
-          }, 2000);
-        })
-        .catch((err) => {
-          this.$message.error(err);
-        });
+      } else {
+        this.$message.error("产品名称不能为空");
+      }
     },
     del(id) {
       this.$confirm("此操作将永久删除该记录, 是否继续?", "提示", {

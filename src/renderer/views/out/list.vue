@@ -1,13 +1,7 @@
 <template>
   <div class="app-container">
-    <el-form
-      ref="form"
-      :model="form"
-      :inline="true"
-      :rules="rules"
-      size="medium"
-    >
-      <el-form-item label="选择日期:" prop="date">
+    <el-form ref="form" :model="form" :inline="true" size="medium">
+      <el-form-item label="选择日期:">
         <el-col>
           <el-date-picker
             type="date"
@@ -19,12 +13,11 @@
         </el-col>
       </el-form-item>
 
-      <el-form-item label="选择产品:" prop="product_id">
+      <el-form-item label="选择产品:">
         <el-select
           v-model="form.product_id"
           placeholder="请选择产品"
           @visible-change="queryProducts"
-          @change="changeProduct"
         >
           <el-option
             :label="item.name"
@@ -35,26 +28,12 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="出库数量:" prop="quantity">
-        <el-input
-          v-model.number="form.quantity"
-          placeholder="请输入出库数量"
-          clearable
-        ></el-input>
-      </el-form-item>
-
-      <el-form-item label="煤单价:" prop="price">
-        <el-input
-          v-model.number="form.price"
-          placeholder="煤单价"
-          clearable
-          :disabled="true"
-        ></el-input>
-      </el-form-item>
-
       <el-form-item>
-        <el-button type="primary" @click="create" icon="el-icon-edit"
-          >立即出库</el-button
+        <el-button type="primary" @click="search" icon="el-icon-search"
+          >搜索</el-button
+        >
+        <el-button type="warning" icon="el-icon-refresh" @click="reset"
+          >清空搜索</el-button
         >
       </el-form-item>
     </el-form>
@@ -132,10 +111,11 @@
 <script>
 import {
   listProduct,
-  createOutbound,
   delOutbound,
   paginationOutbound,
   countOutbound,
+  countOutboundSearch,
+  paginationOutboundSearch,
 } from "@/api/database";
 import { parseTime } from "@/utils/index";
 
@@ -147,34 +127,12 @@ export default {
       list: null,
       listLoading: true,
       quantity: 0,
+      searchEnable: false,
       form: {
         date: "",
         product_id: "",
-        product_name: "",
-        quantity: "",
-        price: "",
       },
       products: [],
-      rules: {
-        date: [
-          {
-            required: true,
-            message: "请选择日期",
-            trigger: "blur",
-          },
-        ],
-        product_id: [
-          { required: true, message: "请选择产品", trigger: "change" },
-        ],
-        quantity: [
-          { required: true, message: "请填写出库数量", trigger: "blur" },
-          { type: "number", message: "出库数量必须为数字值", trigger: "blur" },
-        ],
-        price: [
-          { required: true, message: "请填写煤单价", trigger: "blur" },
-          { type: "number", message: "煤单价必须为数字值", trigger: "blur" },
-        ],
-      },
     };
   },
   filters: {
@@ -184,9 +142,24 @@ export default {
     this.fetchData(this.currentPage);
   },
   methods: {
+    reset() {
+      this.form.date = "";
+      this.form.product_id = "";
+      this.searchEnable = false;
+      this.currentPage = 1;
+      this.handleCurrentChange(1);
+    },
+    search() {
+      this.searchEnable = true;
+      this.fetchSearchData(this.currentPage);
+    },
     handleCurrentChange(val) {
       this.currentPage = val;
-      this.fetchData(val);
+      if (this.search) {
+        this.fetchSearchData(val);
+      } else {
+        this.fetchData(val);
+      }
     },
     fetchData(pageNum) {
       this.listLoading = true;
@@ -198,40 +171,18 @@ export default {
         this.listLoading = false;
       });
     },
-    create() {
-      this.$refs["form"].validate((valid) => {
-        if (valid) {
-          if (this.form.quantity > this.quantity) {
-            this.$message({
-              message: `该产品最大可出库数量为${this.quantity}`,
-              type: "warning",
-            });
-            return;
-          }
-
-          createOutbound(this.form)
-            .then(() => {
-              this.$message({
-                message: "创建成功",
-                type: "success",
-              });
-              this.resetForm();
-              setTimeout(() => {
-                this.fetchData(this.currentPage);
-              }, 2000);
-            })
-            .catch((err) => {
-              console.log(err);
-              this.$message.error("创建失败");
-            });
-        } else {
-          this.$notify({
-            title: "警告",
-            message: "请检查提交的内容是否完整",
-            type: "warning",
-          });
-          return false;
-        }
+    fetchSearchData(pageNum) {
+      this.listLoading = true;
+      countOutboundSearch(this.form.date, this.form.product_id).then((res) => {
+        this.total = res.total;
+      });
+      paginationOutboundSearch(
+        pageNum,
+        this.form.date,
+        this.form.product_id
+      ).then((res) => {
+        this.list = res;
+        this.listLoading = false;
       });
     },
     del(id, product_id, quantity) {
@@ -247,7 +198,11 @@ export default {
               type: "success",
             });
             setTimeout(() => {
-              this.fetchData(this.currentPage);
+              if (this.searchEnable) {
+                this.fetchSearchData(this.currentPage);
+              } else {
+                this.fetchData(this.currentPage);
+              }
             }, 2000);
           });
         })
@@ -259,23 +214,6 @@ export default {
           this.products = res;
         });
       }
-    },
-    changeProduct(id) {
-      let p = this.products.filter((item) => item.id == id);
-      if (p.length > 0) {
-        this.form.product_name = p[0].name;
-        this.form.price = p[0].cost;
-        this.quantity = p[0].quantity;
-      }
-    },
-    resetForm() {
-      this.form = {
-        date: "",
-        product_id: "",
-        product_name: "",
-        quantity: "",
-        price: "",
-      };
     },
   },
 };

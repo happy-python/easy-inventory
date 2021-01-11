@@ -4,7 +4,7 @@
       <el-tag>原煤入洗情况表</el-tag>
       <el-button
         icon="el-icon-download"
-        size="small"
+        size="medium"
         :loading="downloadExcelLoading"
         type="primary"
         @click="downloadExcel"
@@ -59,19 +59,78 @@
         :page-size="10"
       >
       </el-pagination>
-
-      <div class="table">
-        <el-tag>库存结余表</el-tag>
-        <el-button icon="el-icon-download" size="small" type="primary"
-          >导出</el-button
-        >
-      </div>
     </div>
+
+    <div class="table">
+      <el-tag>库存结余表</el-tag>
+
+      <el-date-picker
+        size="medium"
+        type="date"
+        placeholder="请选择日期"
+        v-model="date"
+        value-format="yyyy-MM-dd"
+        @change="changeDate"
+      ></el-date-picker>
+
+      <el-button
+        icon="el-icon-download"
+        size="medium"
+        type="primary"
+        @click="downloadExcel2"
+        :loading="downloadExcelLoading"
+        >导出</el-button
+      >
+    </div>
+
+    <el-table :data="inventory" style="width: 100%">
+      <el-table-column
+        label="产品"
+        prop="name"
+        align="center"
+      ></el-table-column>
+      <el-table-column label="入库" align="center">
+        <el-table-column
+          label="调入"
+          prop="in"
+          align="center"
+        ></el-table-column>
+        <el-table-column label="配出" prop="match_out" align="center">
+        </el-table-column>
+        <el-table-column label="出洗" prop="wash_out" align="center">
+        </el-table-column>
+      </el-table-column>
+      <el-table-column label="出库" align="center">
+        <el-table-column label="调出" prop="out" align="center">
+        </el-table-column>
+        <el-table-column label="配入" prop="match_in" align="center">
+        </el-table-column>
+        <el-table-column label="入洗" prop="wash_in" align="center">
+        </el-table-column>
+      </el-table-column>
+      <el-table-column label="盘盈" prop="inventory" align="center">
+      </el-table-column>
+      <el-table-column
+        label="期末余量"
+        prop="remain"
+        align="center"
+      ></el-table-column>
+      <el-table-column
+        label="成本"
+        prop="cost"
+        align="center"
+      ></el-table-column>
+    </el-table>
   </div>
 </template>
 
 <script>
-import { paginationWash, countWash, allWash } from "@/api/database";
+import {
+  paginationWash,
+  countWash,
+  allWash,
+  inventoryData,
+} from "@/api/database";
 import { parseTime } from "@/utils/index";
 import download from "@/utils/download";
 
@@ -79,10 +138,13 @@ export default {
   data() {
     return {
       total: 0,
+      total2: 0,
       currentPage: 1,
       list: null,
       listLoading: true,
       downloadExcelLoading: false,
+      inventory: null,
+      date: "",
     };
   },
   filters: {
@@ -90,8 +152,17 @@ export default {
   },
   created() {
     this.fetchData(this.currentPage);
+    this.date = parseTime(new Date(), "{y}-{m}-{d}");
+    inventoryData(this.date).then((res) => {
+      this.inventory = res;
+    });
   },
   methods: {
+    changeDate(date) {
+      inventoryData(date).then((res) => {
+        this.inventory = res;
+      });
+    },
     handleCurrentChange(val) {
       this.currentPage = val;
       this.fetchData(val);
@@ -106,7 +177,7 @@ export default {
         this.listLoading = false;
       });
     },
-    // 导出表格
+    // 原煤入洗情况表 导出表格
     downloadExcel() {
       if (this.total == 0) {
         this.$message({
@@ -134,12 +205,16 @@ export default {
             }
             const name = "原煤入洗情况表";
             download
-              .excel(name, [
-                {
-                  name,
-                  data,
-                },
-              ])
+              .excel(
+                name,
+                [
+                  {
+                    name,
+                    data,
+                  },
+                ],
+                null
+              )
               .then((arg) => {
                 this.downloadExcelLoading = false;
                 this.$message({
@@ -152,6 +227,93 @@ export default {
                 this.downloadExcelLoading = false;
                 this.$message.error("导出失败");
               });
+          })
+          .catch((err) => {
+            console.log(err);
+            this.downloadExcelLoading = false;
+            this.$message.error("导出失败");
+          });
+      } catch (err) {
+        console.log(err);
+        this.downloadExcelLoading = false;
+        this.$message.error("导出失败");
+      }
+    },
+    // 库存结余表 导出表格
+    downloadExcel2() {
+      this.downloadExcelLoading = true;
+      try {
+        const data = [
+          [
+            "产品",
+            "入库",
+            null,
+            null,
+            "出库",
+            null,
+            null,
+            "盘盈",
+            "期末余量",
+            "成本",
+          ],
+          [
+            null,
+            "调入",
+            "配出",
+            "出洗",
+            "调出",
+            "配入",
+            "入洗",
+            null,
+            null,
+            null,
+          ],
+        ];
+
+        for (const item of this.inventory) {
+          data.push([
+            item.name,
+            item.in,
+            item.match_out,
+            item.wash_out,
+            item.out,
+            item.match_in,
+            item.wash_in,
+            item.inventory,
+            item.remain,
+            item.cost,
+          ]);
+        }
+        const name = "库存结余表";
+
+        // 合并单元格
+        const range1 = { s: { c: 0, r: 0 }, e: { c: 0, r: 1 } }; // A1:A2
+        const range2 = { s: { c: 1, r: 0 }, e: { c: 3, r: 0 } }; // B1:D1
+        const range3 = { s: { c: 4, r: 0 }, e: { c: 6, r: 0 } }; // E1:G1
+        const range4 = { s: { c: 7, r: 0 }, e: { c: 7, r: 1 } }; // H1:H2
+        const range5 = { s: { c: 8, r: 0 }, e: { c: 8, r: 1 } }; // I1:I2
+        const range6 = { s: { c: 9, r: 0 }, e: { c: 9, r: 1 } }; // J1:J2
+        const options = {
+          "!merges": [range1, range2, range3, range4, range5, range6],
+        };
+
+        download
+          .excel(
+            name,
+            [
+              {
+                name,
+                data,
+              },
+            ],
+            options
+          )
+          .then((arg) => {
+            this.downloadExcelLoading = false;
+            this.$message({
+              message: "导出成功",
+              type: "success",
+            });
           })
           .catch((err) => {
             console.log(err);

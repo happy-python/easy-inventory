@@ -58,12 +58,21 @@ export const constantRouterMap = [
   {
     path: "/in",
     component: Layout,
+    redirect: "/in/list",
+    name: "In",
+    meta: { title: "入库", icon: "lock" },
     children: [
       {
         path: "list",
-        name: "In",
+        name: "InList",
         component: () => import("@/views/in/list"),
-        meta: { title: "入库", icon: "lock" },
+        meta: { title: "全部数据", icon: "list" },
+      },
+      {
+        path: "create",
+        name: "InCreate",
+        component: () => import("@/views/in/create"),
+        meta: { title: "新增数据", icon: "form" },
       },
     ],
   },
@@ -71,12 +80,21 @@ export const constantRouterMap = [
   {
     path: "/out",
     component: Layout,
+    redirect: "/out/list",
+    name: "Out",
+    meta: { title: "出库", icon: "out" },
     children: [
       {
         path: "list",
-        name: "Out",
+        name: "OutList",
         component: () => import("@/views/out/list"),
-        meta: { title: "出库", icon: "out" },
+        meta: { title: "全部数据", icon: "list" },
+      },
+      {
+        path: "create",
+        name: "OutCreate",
+        component: () => import("@/views/out/create"),
+        meta: { title: "新增数据", icon: "form" },
       },
     ],
   },

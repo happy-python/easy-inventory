@@ -2,7 +2,7 @@
 
 > An electron-vue project
 
-在 electron-vue-admin 的基础上进行改造，添加了本地数据库的支持（better-sqlite3），以及简单的 Excel 的导出功能（electron-dl）
+在 electron-vue-admin 的基础上进行改造，添加了本地数据库的支持（better-sqlite3），以及 Excel 的导出下载功能（node-xlsx + electron-dl）
 
 
 本地数据库可选方案：

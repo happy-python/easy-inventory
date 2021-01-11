@@ -14,9 +14,9 @@ fse.ensureDirSync(tmpPath);
  * @param {Object} excelOption 表格配置([{name:<String>,data:<Array>}])
  * @return {Promise} 导出回调
  */
-const excel = (filename, excelOption) => {
+const excel = (filename, sheet, excelOption) => {
   return new Promise((resolve, reject) => {
-    const buffer = xlsx.build(excelOption);
+    const buffer = xlsx.build(sheet, excelOption);
     const fileName = `${day().format("YYYY-MM-DD_HH-mm-ss")}_${filename}.xlsx`;
     const filePath = path.join(tmpPath, fileName);
 

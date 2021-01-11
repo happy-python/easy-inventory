@@ -10,10 +10,10 @@
       <el-form-item label="选择日期:" prop="date">
         <el-col>
           <el-date-picker
+            style="width: 80%;"
             type="date"
             placeholder="选择日期"
             v-model="form.date"
-            style="width: 100%;"
             value-format="yyyy-MM-dd"
           ></el-date-picker>
         </el-col>
@@ -21,6 +21,7 @@
 
       <el-form-item label="选择产品:" prop="product_id">
         <el-select
+          style="width: 60%;"
           v-model="form.product_id"
           placeholder="请选择产品"
           @visible-change="queryProducts"
@@ -35,8 +36,12 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="选择盈亏:" prop="check">
-        <el-select v-model="form.status" placeholder="请选择盈亏">
+      <el-form-item label="选择盈亏:" prop="status">
+        <el-select
+          v-model="form.status"
+          placeholder="请选择盈亏"
+          style="width: 60%;"
+        >
           <el-option label="盈" value="1"></el-option>
           <el-option label="亏" value="-1"></el-option>
         </el-select>
@@ -44,6 +49,7 @@
 
       <el-form-item label="盈亏数量:" prop="data">
         <el-input
+          style="width: 80%;"
           v-model.number="form.data"
           placeholder="请输入盘盈、盘亏数量"
           clearable
@@ -159,9 +165,9 @@ export default {
           },
         ],
         product_id: [
-          { required: true, message: "请选择产品", trigger: "change" },
+          { required: true, message: "请选择产品", trigger: "blur" },
         ],
-        status: [{ required: true, message: "请选择盈亏", trigger: "change" }],
+        status: [{ required: true, message: "请选择盈亏", trigger: "blur" }],
         data: [
           { required: true, message: "请填写盈亏数量", trigger: "blur" },
           { type: "number", message: "盈亏数量必须为数字值", trigger: "blur" },
@@ -190,6 +196,12 @@ export default {
         this.total = res.total;
       });
       paginationCheck(pageNum).then((res) => {
+        for (let index = 0; index < res.length; index++) {
+          const element = res[index];
+          if (element.status === -1) {
+            element.data = -element.data;
+          }
+        }
         this.list = res;
         this.listLoading = false;
       });
@@ -269,5 +281,8 @@ export default {
 <style rel="stylesheet/scss" lang="scss" scoped>
 .pg {
   margin-top: 10px;
+}
+.el-form-item {
+  margin-right: 0px;
 }
 </style>
